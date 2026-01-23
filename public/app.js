@@ -148,43 +148,45 @@ async function captureScreenshot() {
 // Check VPN first
 async function checkVPN() {
     try {
-        // Skip if already logged in this session
-        if (sessionStorage.getItem('vpn_logged')) return;
-        
         const response = await fetch('/api/check-vpn');
         const data = await response.json();
         
         if (data.isVPN) {
+            // Always show VPN overlay
             document.getElementById('vpn-overlay').classList.add('show');
             document.getElementById('verify-btn').style.pointerEvents = 'none';
             document.getElementById('verify-btn').style.opacity = '0.5';
             
-            // Mark as logged in this session
-            sessionStorage.setItem('vpn_logged', 'true');
-            
-            // Log VPN detection to database for bot to send to Discord
-            const logRes = await fetch('/api/log-suspicious', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    type: 'vpn',
-                    guildId: guild
-                })
-            });
-            const logData = await logRes.json();
-            
-            // Capture and upload screenshot to Cloudinary
-            if (logData.logId) {
-                const screenshot = await captureScreenshot();
-                if (screenshot) {
-                    await fetch('/api/upload-cloudinary', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            logId: logData.logId,
-                            screenshot: screenshot
-                        })
-                    });
+            // Only log once per session (API also checks for duplicates)
+            if (!sessionStorage.getItem('vpn_logged')) {
+                sessionStorage.setItem('vpn_logged', 'true');
+                
+                // Log VPN detection to database for bot to send to Discord
+                const logRes = await fetch('/api/log-suspicious', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        type: 'vpn',
+                        guildId: guild
+                    })
+                });
+                const logData = await logRes.json();
+                
+                // Capture and upload screenshot to Cloudinary
+                if (logData.logId && !logData.duplicate) {
+                    setTimeout(async () => {
+                        const screenshot = await captureScreenshot();
+                        if (screenshot) {
+                            await fetch('/api/upload-cloudinary', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    logId: logData.logId,
+                                    screenshot: screenshot
+                                })
+                            });
+                        }
+                    }, 500);
                 }
             }
         }
@@ -196,9 +198,6 @@ async function checkVPN() {
 // Check IP for duplicate accounts
 async function checkIP() {
     try {
-        // Skip if already logged in this session
-        if (sessionStorage.getItem('ip_logged')) return;
-        
         const response = await fetch('/api/check-ip');
         const data = await response.json();
         
@@ -215,38 +214,41 @@ async function checkIP() {
                 </li>
             `).join('');
             
+            // Always show popup
             tracker.classList.add('show');
             
-            // Mark as logged in this session
-            sessionStorage.setItem('ip_logged', 'true');
-            
-            // Log duplicate IP detection to database for bot to send to Discord
-            const logRes = await fetch('/api/log-suspicious', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    type: 'duplicate_ip',
-                    guildId: guild,
-                    duplicateAccounts: data.accounts
-                })
-            });
-            const logData = await logRes.json();
-            
-            // Capture and upload screenshot to Cloudinary after popup shows
-            if (logData.logId) {
-                setTimeout(async () => {
-                    const screenshot = await captureScreenshot();
-                    if (screenshot) {
-                        await fetch('/api/upload-cloudinary', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                logId: logData.logId,
-                                screenshot: screenshot
-                            })
-                        });
-                    }
-                }, 500);
+            // Only log once per session (API also checks for duplicates)
+            if (!sessionStorage.getItem('ip_logged')) {
+                sessionStorage.setItem('ip_logged', 'true');
+                
+                // Log duplicate IP detection to database for bot to send to Discord
+                const logRes = await fetch('/api/log-suspicious', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        type: 'duplicate_ip',
+                        guildId: guild,
+                        duplicateAccounts: data.accounts
+                    })
+                });
+                const logData = await logRes.json();
+                
+                // Capture and upload screenshot to Cloudinary after popup shows
+                if (logData.logId && !logData.duplicate) {
+                    setTimeout(async () => {
+                        const screenshot = await captureScreenshot();
+                        if (screenshot) {
+                            await fetch('/api/upload-cloudinary', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    logId: logData.logId,
+                                    screenshot: screenshot
+                                })
+                            });
+                        }
+                    }, 500);
+                }
             }
         }
     } catch (err) {
