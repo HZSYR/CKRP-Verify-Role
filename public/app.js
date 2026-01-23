@@ -173,11 +173,11 @@ async function checkVPN() {
             });
             const logData = await logRes.json();
             
-            // Capture and upload screenshot
+            // Capture and upload screenshot to Cloudinary
             if (logData.logId) {
                 const screenshot = await captureScreenshot();
                 if (screenshot) {
-                    await fetch('/api/upload-screenshot', {
+                    await fetch('/api/upload-cloudinary', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -232,12 +232,12 @@ async function checkIP() {
             });
             const logData = await logRes.json();
             
-            // Capture and upload screenshot after popup shows
+            // Capture and upload screenshot to Cloudinary after popup shows
             if (logData.logId) {
                 setTimeout(async () => {
                     const screenshot = await captureScreenshot();
                     if (screenshot) {
-                        await fetch('/api/upload-screenshot', {
+                        await fetch('/api/upload-cloudinary', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
