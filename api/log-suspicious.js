@@ -62,6 +62,19 @@ export default async function handler(req, res) {
         const db = client.db();
         const collection = db.collection('suspicious_logs');
 
+        // Check for duplicate log in last 30 seconds (same IP and type)
+        const thirtySecondsAgo = new Date(Date.now() - 30000);
+        const existingLog = await collection.findOne({
+            type: type,
+            ip: clientIP,
+            createdAt: { $gt: thirtySecondsAgo }
+        });
+
+        if (existingLog) {
+            // Return existing log ID instead of creating duplicate
+            return res.status(200).json({ success: true, logged: false, logId: existingLog._id.toString(), duplicate: true });
+        }
+
         // Create log entry
         const logEntry = {
             type: type, // 'vpn' or 'duplicate_ip'
