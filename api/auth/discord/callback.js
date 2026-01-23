@@ -73,21 +73,25 @@ export default async function handler(req, res) {
         });
         const user = await userRes.json();
 
-        // Get guild from cookie
-        const cookies = req.headers.cookie?.split(';').reduce((acc, c) => {
-            const [key, val] = c.trim().split('=');
-            acc[key] = val;
-            return acc;
-        }, {}) || {};
+        // Get guild from state parameter (more reliable than cookies)
+        let guildId = null;
+        const { state } = req.query;
+        if (state) {
+            try {
+                const decoded = JSON.parse(Buffer.from(state, 'base64').toString());
+                guildId = decoded.guildId;
+            } catch (e) {
+                console.error('Failed to decode state:', e);
+            }
+        }
         
-        const guildId = cookies.guildId;
         if (!guildId) {
             return res.redirect('/?error=no_guild');
         }
 
-        // Connect to MongoDB
+        // Connect to MongoDB (use database from connection string)
         const client = await connectToDatabase();
-        const db = client.db('ckrp-takerole');
+        const db = client.db();
         const collection = db.collection('verifications');
 
         // Check if already verified
@@ -122,8 +126,6 @@ export default async function handler(req, res) {
             createdAt: new Date()
         });
 
-        // Clear guild cookie
-        res.setHeader('Set-Cookie', 'guildId=; Path=/; HttpOnly; Max-Age=0');
         res.redirect('/?status=success');
 
     } catch (error) {
