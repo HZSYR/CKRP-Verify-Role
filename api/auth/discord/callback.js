@@ -127,7 +127,8 @@ export default async function handler(req, res) {
         res.redirect('/?status=success');
 
     } catch (error) {
-        console.error('OAuth Error:', error);
-        res.redirect('/?error=oauth_failed');
+        console.error('OAuth Error:', error.message);
+        console.error('Stack:', error.stack);
+        res.redirect('/?error=oauth_failed&msg=' + encodeURIComponent(error.message));
     }
 }
