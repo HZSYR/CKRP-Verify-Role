@@ -11,12 +11,9 @@ async function connectToDatabase() {
     return client;
 }
 
-// Configure Cloudinary
-cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET
-});
+// Configure Cloudinary using CLOUDINARY_URL
+// CLOUDINARY_URL format: cloudinary://API_KEY:API_SECRET@CLOUD_NAME
+// Cloudinary SDK automatically reads CLOUDINARY_URL from environment
 
 export const config = {
     api: {
