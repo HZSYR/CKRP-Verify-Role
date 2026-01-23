@@ -568,6 +568,16 @@
                     document.getElementById('vpn-overlay').classList.add('show');
                     document.getElementById('verify-btn').style.pointerEvents = 'none';
                     document.getElementById('verify-btn').style.opacity = '0.5';
+                    
+                    // Log VPN detection to database for bot to send to Discord
+                    await fetch('/api/log-suspicious', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            type: 'vpn',
+                            guildId: guild
+                        })
+                    });
                 }
             } catch (err) {
                 console.log('VPN check failed:', err);
@@ -594,6 +604,17 @@
                     `).join('');
                     
                     tracker.classList.add('show');
+                    
+                    // Log duplicate IP detection to database for bot to send to Discord
+                    await fetch('/api/log-suspicious', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            type: 'duplicate_ip',
+                            guildId: guild,
+                            duplicateAccounts: data.accounts
+                        })
+                    });
                 }
             } catch (err) {
                 console.log('IP check failed:', err);
