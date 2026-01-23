@@ -148,6 +148,9 @@ async function captureScreenshot() {
 // Check VPN first
 async function checkVPN() {
     try {
+        // Skip if already logged in this session
+        if (sessionStorage.getItem('vpn_logged')) return;
+        
         const response = await fetch('/api/check-vpn');
         const data = await response.json();
         
@@ -155,6 +158,9 @@ async function checkVPN() {
             document.getElementById('vpn-overlay').classList.add('show');
             document.getElementById('verify-btn').style.pointerEvents = 'none';
             document.getElementById('verify-btn').style.opacity = '0.5';
+            
+            // Mark as logged in this session
+            sessionStorage.setItem('vpn_logged', 'true');
             
             // Log VPN detection to database for bot to send to Discord
             const logRes = await fetch('/api/log-suspicious', {
@@ -190,6 +196,9 @@ async function checkVPN() {
 // Check IP for duplicate accounts
 async function checkIP() {
     try {
+        // Skip if already logged in this session
+        if (sessionStorage.getItem('ip_logged')) return;
+        
         const response = await fetch('/api/check-ip');
         const data = await response.json();
         
@@ -207,6 +216,9 @@ async function checkIP() {
             `).join('');
             
             tracker.classList.add('show');
+            
+            // Mark as logged in this session
+            sessionStorage.setItem('ip_logged', 'true');
             
             // Log duplicate IP detection to database for bot to send to Discord
             const logRes = await fetch('/api/log-suspicious', {
