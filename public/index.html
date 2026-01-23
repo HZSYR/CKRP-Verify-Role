@@ -277,6 +277,78 @@
             color: rgba(255, 255, 255, 0.5);
         }
 
+        /* VPN Popup Overlay */
+        .vpn-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 1000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .vpn-overlay.show {
+            display: flex;
+        }
+
+        .vpn-popup {
+            background: rgba(20, 20, 20, 0.98);
+            border: 3px solid #ff0000;
+            border-radius: 20px;
+            padding: 40px 50px;
+            text-align: center;
+            max-width: 450px;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.5), 0 0 60px rgba(255, 0, 0, 0.3);
+            animation: vpnPulse 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes vpnPulse {
+            0% { box-shadow: 0 0 30px rgba(255, 0, 0, 0.5), 0 0 60px rgba(255, 0, 0, 0.3); }
+            100% { box-shadow: 0 0 50px rgba(255, 0, 0, 0.7), 0 0 100px rgba(255, 0, 0, 0.5); }
+        }
+
+        .vpn-icon {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            color: #ff0000;
+            animation: vpnShake 0.5s ease-in-out infinite;
+        }
+
+        @keyframes vpnShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .vpn-title {
+            color: #ff0000;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
+        }
+
+        .vpn-message {
+            color: #ffffff;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+
+        .vpn-warning {
+            background: rgba(255, 0, 0, 0.2);
+            border: 1px solid rgba(255, 0, 0, 0.5);
+            border-radius: 10px;
+            padding: 15px;
+            color: #ff6666;
+            font-size: 14px;
+        }
+
         /* Responsive */
         @media (max-width: 480px) {
             .card {
@@ -303,6 +375,24 @@
 <body>
     <!-- Particles Canvas -->
     <canvas id="particles-canvas"></canvas>
+
+    <!-- VPN Detected Overlay -->
+    <div class="vpn-overlay" id="vpn-overlay">
+        <div class="vpn-popup">
+            <svg class="vpn-icon" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                <line x1="4" y1="4" x2="20" y2="20" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            <h2 class="vpn-title">🛡️ VPN TERDETEKSI!</h2>
+            <p class="vpn-message">
+                Kami mendeteksi bahwa kamu menggunakan <strong>VPN, Proxy, atau Hosting IP</strong>.<br><br>
+                Untuk melanjutkan verifikasi, silakan <strong>matikan VPN</strong> kamu terlebih dahulu.
+            </p>
+            <div class="vpn-warning">
+                ⚠️ Verifikasi tidak dapat dilakukan saat menggunakan VPN untuk alasan keamanan.
+            </div>
+        </div>
+    </div>
 
     <!-- IP Tracker Popup -->
     <div class="ip-tracker" id="ip-tracker">
@@ -468,6 +558,22 @@
         init();
         animate();
 
+        // Check VPN first
+        async function checkVPN() {
+            try {
+                const response = await fetch('/api/check-vpn');
+                const data = await response.json();
+                
+                if (data.isVPN) {
+                    document.getElementById('vpn-overlay').classList.add('show');
+                    document.getElementById('verify-btn').style.pointerEvents = 'none';
+                    document.getElementById('verify-btn').style.opacity = '0.5';
+                }
+            } catch (err) {
+                console.log('VPN check failed:', err);
+            }
+        }
+
         // Check IP for duplicate accounts
         async function checkIP() {
             try {
@@ -494,6 +600,7 @@
             }
         }
         
+        checkVPN();
         checkIP();
     </script>
 </body>
