@@ -77,9 +77,9 @@ export default async function handler(req, res) {
             createdAt: new Date()
         };
 
-        await collection.insertOne(logEntry);
+        const result = await collection.insertOne(logEntry);
 
-        return res.status(200).json({ success: true, logged: true });
+        return res.status(200).json({ success: true, logged: true, logId: result.insertedId.toString() });
 
     } catch (error) {
         console.error('Log Suspicious Error:', error);
