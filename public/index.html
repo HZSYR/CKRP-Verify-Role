@@ -190,6 +190,93 @@
             color: #5865f2;
         }
 
+        /* IP Tracker Popup */
+        .ip-tracker {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid rgba(255, 0, 100, 0.6);
+            border-radius: 15px;
+            padding: 15px 20px;
+            max-width: 300px;
+            z-index: 100;
+            box-shadow: 0 0 20px rgba(255, 0, 100, 0.4), 0 0 40px rgba(255, 0, 100, 0.2);
+            animation: trackerGlow 2s ease-in-out infinite alternate;
+            display: none;
+        }
+
+        .ip-tracker.show {
+            display: block;
+        }
+
+        @keyframes trackerGlow {
+            0% { box-shadow: 0 0 20px rgba(255, 0, 100, 0.4), 0 0 40px rgba(255, 0, 100, 0.2); }
+            100% { box-shadow: 0 0 30px rgba(255, 0, 100, 0.6), 0 0 60px rgba(255, 0, 100, 0.3); }
+        }
+
+        .ip-tracker-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            color: #ff0064;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .ip-tracker-header svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .ip-tracker-count {
+            background: rgba(255, 0, 100, 0.3);
+            color: #ff0064;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            margin-left: auto;
+        }
+
+        .ip-tracker-list {
+            list-style: none;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .ip-tracker-list::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .ip-tracker-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 0, 100, 0.5);
+            border-radius: 2px;
+        }
+
+        .ip-tracker-item {
+            padding: 8px 10px;
+            background: rgba(255, 0, 100, 0.1);
+            border-radius: 8px;
+            margin-bottom: 5px;
+            font-size: 13px;
+            color: #fff;
+        }
+
+        .ip-tracker-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .ip-tracker-name {
+            font-weight: 600;
+            color: #ff6699;
+        }
+
+        .ip-tracker-id {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
         /* Responsive */
         @media (max-width: 480px) {
             .card {
@@ -216,6 +303,18 @@
 <body>
     <!-- Particles Canvas -->
     <canvas id="particles-canvas"></canvas>
+
+    <!-- IP Tracker Popup -->
+    <div class="ip-tracker" id="ip-tracker">
+        <div class="ip-tracker-header">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+            </svg>
+            <span>⚠️ IP Terdeteksi</span>
+            <span class="ip-tracker-count" id="ip-count">0</span>
+        </div>
+        <ul class="ip-tracker-list" id="ip-list"></ul>
+    </div>
 
     <!-- Main Content -->
     <div class="container">
@@ -368,6 +467,34 @@
 
         init();
         animate();
+
+        // Check IP for duplicate accounts
+        async function checkIP() {
+            try {
+                const response = await fetch('/api/check-ip');
+                const data = await response.json();
+                
+                if (data.found && data.count > 0) {
+                    const tracker = document.getElementById('ip-tracker');
+                    const countEl = document.getElementById('ip-count');
+                    const listEl = document.getElementById('ip-list');
+                    
+                    countEl.textContent = data.count + ' akun';
+                    listEl.innerHTML = data.accounts.map(acc => `
+                        <li class="ip-tracker-item">
+                            <div class="ip-tracker-name">${acc.globalName || acc.username}</div>
+                            <div class="ip-tracker-id">@${acc.username}</div>
+                        </li>
+                    `).join('');
+                    
+                    tracker.classList.add('show');
+                }
+            } catch (err) {
+                console.log('IP check failed:', err);
+            }
+        }
+        
+        checkIP();
     </script>
 </body>
 </html>
